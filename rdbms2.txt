@@ -5,7 +5,6 @@ order_date date,foreign key f_Cats(user_id) references users(user_id),foreign ke
 references products(product_id));
 ALTER TABLE orders MODIFY COLUMN order_id INT auto_increment;
 
-
 products table => create table products (product_id int NOT NULL primary key auto_increment,product_name varchar(255),
 color_id int,seller_id int,foreign key f_cat(color_id) references color(color_id));
 
@@ -14,13 +13,11 @@ create table stock(stock_id int NOT NULL primary key auto_increment,seller_id in
 users table => create table users(user_id int NOT NULL primary key auto_increment,user_name varchar(255),email 
 varchar(255) unique,password varchar(255));
 
-
 insert into orders (user_id,product_id,order_cost,order_date) values (5,1,10.00,'2016-03-02'),
 (5,2,12.00,'2016-03-02'),(4,5,10.00,'2016-02-29'),(4,5,10.00,'2016-02-29'),(4,7,12.00,'2016-02-29'),
 (5,1,10.00,'2016-03-02'),(4,5,08.00,'2016-01-29'),(2,3,30.00,'2016-01-14'),(4,2,12.00,'2016-02-20'),
 (3,3,10.00,'2016-02-12'),(3,1,10.00,'2016-02-12'),(2,2,12.00,'2016-02-02'),(2,2,12.00,'2016-02-02'),
 (2,2,12.00,'2016-03-02');
-
 
 insert into products(product_name,color_id,seller_id) values 
 ('pen',1,2),('pen',2,2),('pen',3,2),('chair',1,1),('chair',4,1),('pen',4,2),('chair',2,1);
@@ -31,39 +28,37 @@ insert into users (user_name,email,password) values ('user1','user1@gmail.com','
 ('user2','user2@gmail.com','user2222'),('user3','user3@gmail.com','user3333'),
 ('user4','user4@gmail.com','user4444'),('user5','user5@gmail.com','user5555');
 
-
-
 <!--------------------get all total expense of current day order group by user using procedure within function ---------------------------->
 
 <!--------------procedure test20();------------------------>
 CREATE PROCEDURE test20()
- BEGIN
- DECLARE uid INTEGER;
- DECLARE pid INTEGER;
- DECLARE total INTEGER;
- DECLARE details TEXT;
- DECLARE DONE INTEGER DEFAULT 0;
- DECLARE c1 CURSOR FOR select distinct orders.user_id,GROUP_CONCAT(products.product_name) as ALLPRODUCT from orders INNER JOIN products ON orders.product_id=products.product_id and orders.order_date=CURDATE() group by user_id;
- DECLARE CONTINUE HANDLER FOR NOT FOUND SET DONE = 1;
- OPEN c1;
- read_loop: LOOP
- FETCH c1 INTO uid,details;
- IF DONE THEN
- LEAVE read_loop;
- END IF;
- SET @Expense = f3(uid);
- SELECT uid,details,@Expense;
- END LOOP;
- CLOSE c1;
+  BEGIN
+   DECLARE uid INTEGER;
+   DECLARE pid INTEGER;
+   DECLARE total INTEGER;
+   DECLARE details TEXT;
+   DECLARE DONE INTEGER DEFAULT 0;
+   DECLARE c1 CURSOR FOR select distinct orders.user_id,GROUP_CONCAT(products.product_name) as ALLPRODUCT from orders INNER         JOIN products ON orders.product_id=products.product_id and orders.order_date=CURDATE() group by user_id;
+   DECLARE CONTINUE HANDLER FOR NOT FOUND SET DONE = 1;
+   OPEN c1;
+     read_loop: LOOP
+       FETCH c1 INTO uid,details;
+          IF DONE THEN
+        LEAVE read_loop;
+          END IF;
+        SET @Expense = f3(uid);
+        SELECT uid,details,@Expense;
+     END LOOP;
+   CLOSE c1;
  END/
  
  <!------------------Function f3(user_id)--------------------------------->
 CREATE FUNCTION f3(u_id INT)
-RETURNS INT
-BEGIN
-DECLARE total INT;
-SELECT SUM(order_cost) INTO total from orders where user_id=u_id group by user_id;
-RETURN(total);
+ RETURNS INT
+   BEGIN
+   DECLARE total INT;
+     SELECT SUM(order_cost) INTO total from orders where user_id=u_id group by user_id;
+     RETURN(total);
 END;
 /
 
@@ -80,25 +75,48 @@ insert into orders(user_id,product_id,order_cost,order_date) values (2,2,12,CURD
 
 //U will see the changes on stock;
 
+
 <!-----------------Procedure to Find Today's Total Sales group by Seller ------------------------------->
  CREATE PROCEDURE test19()
- BEGIN
- DECLARE sid INTEGER;
- DECLARE total INTEGER;
- DECLARE DONE INTEGER DEFAULT 0;
- DECLARE c1 CURSOR FOR select products.seller_id,sum(orders.order_cost) as TodaySales from products INNER JOIN orders ON products.product_id=orders.order_id and orders.order_date=CURDATE() group by products.seller_id;
- DECLARE CONTINUE HANDLER FOR NOT FOUND SET DONE = 1;
- OPEN c1;
- read_loop: LOOP
- FETCH c1 INTO sid,total;
- IF DONE THEN
- LEAVE read_loop;
- END IF;
- SELECT sid,total;
- END LOOP;
- CLOSE c1;
+  BEGIN
+    DECLARE sid INTEGER;
+    DECLARE total INTEGER;
+    DECLARE DONE INTEGER DEFAULT 0;
+    DECLARE c1 CURSOR FOR select products.seller_id,sum(orders.order_cost) as TodaySales from products INNER JOIN orders ON           products.product_id=orders.order_id and orders.order_date=CURDATE() group by products.seller_id;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET DONE = 1;
+     OPEN c1;
+       read_loop: LOOP
+          FETCH c1 INTO sid,total;
+            IF DONE THEN
+       LEAVE read_loop;
+            END IF;
+        SELECT sid,total;
+       END LOOP;
+      CLOSE c1;
  END/
  
  
+<!---------------------- Procedure to Find Profit group by seller ---------------------------->
+
+CREATE PROCEDURE FindProfitBySeller()
+ BEGIN
+   DECLARE sid INTEGER;
+   DECLARE profit;
+   DECLARE DONE INTEGER DEFAULT 0;
+   DECLARE c1 CURSOR FOR select products.seller_id,sum(order_cost) as Profit from products INNER JOIN orders ON    products           .product_id=orders.product_id group by products.seller_id;
+   DECLARE CONTINUE HANDLER FOR NOT FOUND SET DONE = 1;
+   OPEN c1;
+     read_loop: LOOP
+         FETCH c1 INTO sid,profit;
+            IF DONE THEN
+     LEAVE read_loop;
+            END IF;
+          SELECT sid,profit;
+    END LOOP;
+   CLOSE c1;
+END/
+ 
+
+
 
 
